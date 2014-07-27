@@ -19,13 +19,15 @@ import (
 var ErrNoCircusDefined = errors.New("no lifecycle binary bundle defined for stack")
 
 type StartMessageBuilder struct {
+	numAZs                    int
 	repAddrRelativeToExecutor string
 	logger                    lager.Logger
 	circuses                  map[string]string
 }
 
-func New(repAddrRelativeToExecutor string, circuses map[string]string, logger lager.Logger) *StartMessageBuilder {
+func New(numAZs int, repAddrRelativeToExecutor string, circuses map[string]string, logger lager.Logger) *StartMessageBuilder {
 	return &StartMessageBuilder{
+		numAZs: numAZs,
 		repAddrRelativeToExecutor: repAddrRelativeToExecutor,
 		circuses:                  circuses,
 		logger:                    logger,
@@ -84,6 +86,8 @@ func (b *StartMessageBuilder) Build(desiredLRP models.DesiredLRP, lrpIndex int, 
 	return models.LRPStartAuction{
 		ProcessGuid:  lrpGuid,
 		InstanceGuid: instanceGuid.String(),
+		NumInstances: desiredLRP.Instances,
+		NumAZs:       b.numAZs,
 		State:        models.LRPStartAuctionStatePending,
 		Index:        lrpIndex,
 

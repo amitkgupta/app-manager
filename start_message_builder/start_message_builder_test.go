@@ -18,6 +18,7 @@ var _ = Describe("Start Message Builder", func() {
 		desiredLRP                models.DesiredLRP
 		circuses                  map[string]string
 		fileServerURL             string
+		numAZs                    int
 	)
 
 	BeforeEach(func() {
@@ -27,7 +28,8 @@ var _ = Describe("Start Message Builder", func() {
 		circuses = map[string]string{
 			"some-stack": "some-circus.tgz",
 		}
-		builder = New(repAddrRelativeToExecutor, circuses, logger)
+		numAZs = 4
+		builder = New(numAZs, repAddrRelativeToExecutor, circuses, logger)
 		desiredLRP = models.DesiredLRP{
 			ProcessGuid:  "the-app-guid-the-app-version",
 			Source:       "http://the-droplet.uri.com",

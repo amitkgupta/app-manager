@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/cloudfoundry-incubator/app-manager/start_message_builder"
+	"github.com/cloudfoundry-incubator/app-manager/stop_message_builder"
 	"github.com/cloudfoundry-incubator/delta_force/delta_force"
 	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
@@ -17,18 +18,21 @@ var ErrNoHealthCheckDefined = errors.New("no health check defined for stack")
 type Handler struct {
 	bbs                 Bbs.AppManagerBBS
 	startMessageBuilder *start_message_builder.StartMessageBuilder
+	stopMessageBuilder  *stop_message_builder.StopMessageBuilder
 	logger              lager.Logger
 }
 
 func NewHandler(
 	bbs Bbs.AppManagerBBS,
 	startMessageBuilder *start_message_builder.StartMessageBuilder,
+	stopMessageBuilder *stop_message_builder.StopMessageBuilder,
 	logger lager.Logger,
 ) Handler {
 	handlerLogger := logger.Session("handler")
 	return Handler{
 		bbs:                 bbs,
 		startMessageBuilder: startMessageBuilder,
+		stopMessageBuilder:  stopMessageBuilder,
 		logger:              handlerLogger,
 	}
 }
@@ -157,10 +161,9 @@ func (h Handler) processDesiredChange(desiredChange models.DesiredLRPChange) {
 			"desired-app-message":  desiredLRP,
 			"stop-duplicate-index": indexToStopAllButOne,
 		})
-		err = h.bbs.RequestLRPStopAuction(models.LRPStopAuction{
-			ProcessGuid: desiredLRP.ProcessGuid,
-			Index:       indexToStopAllButOne,
-		})
+
+		stopMessage := h.stopMessageBuilder.Build(desiredLRP, indexToStopAllButOne)
+		err = h.bbs.RequestLRPStopAuction(stopMessage)
 
 		if err != nil {
 			changeLogger.Error("request-stop-auction-failed", err, lager.Data{

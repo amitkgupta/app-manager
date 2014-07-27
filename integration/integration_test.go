@@ -41,6 +41,7 @@ var _ = Describe("Starting apps", func() {
 			appManagerPath,
 			etcdRunner.NodeURLS(),
 			map[string]string{"some-stack": "some-health-check.tar.gz"},
+			4,
 			"127.0.0.1:20515",
 		)
 

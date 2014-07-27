@@ -6,6 +6,7 @@ import (
 
 	. "github.com/cloudfoundry-incubator/app-manager/handler"
 	"github.com/cloudfoundry-incubator/app-manager/start_message_builder"
+	"github.com/cloudfoundry-incubator/app-manager/stop_message_builder"
 	"github.com/cloudfoundry-incubator/runtime-schema/bbs/fake_bbs"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/cloudfoundry/storeadapter"
@@ -20,9 +21,11 @@ import (
 var _ = Describe("Handler", func() {
 	var (
 		startMessageBuilder       *start_message_builder.StartMessageBuilder
+		stopMessageBuilder        *stop_message_builder.StopMessageBuilder
 		bbs                       *fake_bbs.FakeAppManagerBBS
 		logger                    *lagertest.TestLogger
 		desiredLRP                models.DesiredLRP
+		numAZs                    int
 		repAddrRelativeToExecutor string
 		healthChecks              map[string]string
 
@@ -32,6 +35,8 @@ var _ = Describe("Handler", func() {
 	BeforeEach(func() {
 		bbs = fake_bbs.NewFakeAppManagerBBS()
 
+		numAZs = 4
+
 		repAddrRelativeToExecutor = "127.0.0.1:20515"
 
 		healthChecks = map[string]string{
@@ -40,9 +45,10 @@ var _ = Describe("Handler", func() {
 
 		logger = lagertest.NewTestLogger("test")
 
-		startMessageBuilder = start_message_builder.New(repAddrRelativeToExecutor, healthChecks, logger)
+		startMessageBuilder = start_message_builder.New(numAZs, repAddrRelativeToExecutor, healthChecks, logger)
+		stopMessageBuilder = stop_message_builder.New(numAZs)
 
-		handlerRunner := NewHandler(bbs, startMessageBuilder, logger)
+		handlerRunner := NewHandler(bbs, startMessageBuilder, stopMessageBuilder, logger)
 
 		desiredLRP = models.DesiredLRP{
 			ProcessGuid:  "the-app-guid-the-app-version",
@@ -385,13 +391,17 @@ var _ = Describe("Handler", func() {
 				stopAuctions := bbs.GetLRPStopAuctions()
 
 				Ω(stopAuctions).Should(ContainElement(models.LRPStopAuction{
-					ProcessGuid: "the-app-guid-the-app-version",
-					Index:       1,
+					ProcessGuid:  "the-app-guid-the-app-version",
+					Index:        1,
+					NumInstances: desiredLRP.Instances,
+					NumAZs:       numAZs,
 				}))
 
 				Ω(stopAuctions).Should(ContainElement(models.LRPStopAuction{
-					ProcessGuid: "the-app-guid-the-app-version",
-					Index:       2,
+					ProcessGuid:  "the-app-guid-the-app-version",
+					Index:        2,
+					NumInstances: desiredLRP.Instances,
+					NumAZs:       numAZs,
 				}))
 			})
 

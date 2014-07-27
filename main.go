@@ -18,6 +18,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/app-manager/handler"
 	"github.com/cloudfoundry-incubator/app-manager/start_message_builder"
+	"github.com/cloudfoundry-incubator/app-manager/stop_message_builder"
 )
 
 var repAddrRelativeToExecutor = flag.String(
@@ -38,8 +39,18 @@ var circuses = flag.String(
 	"app lifecycle binary bundle mapping (stack => bundle filename in fileserver)",
 )
 
+var numAZs = flag.Int(
+	"numAZs",
+	-1,
+	"total number of AZs on which Executors are running",
+)
+
 func main() {
 	flag.Parse()
+
+	if *numAZs < 0 {
+		panic("needs (non-negative) number of AZs")
+	}
 
 	logger := cf_lager.New("app-manager")
 
@@ -51,10 +62,11 @@ func main() {
 		logger.Fatal("invalid-health-checks", err)
 	}
 
-	startMessageBuilder := start_message_builder.New(*repAddrRelativeToExecutor, circuseDownloadURLs, logger)
+	startMessageBuilder := start_message_builder.New(*numAZs, *repAddrRelativeToExecutor, circuseDownloadURLs, logger)
+	stopMessageBuilder := stop_message_builder.New(*numAZs)
 
 	group := grouper.EnvokeGroup(grouper.RunGroup{
-		"handler": handler.NewHandler(bbs, startMessageBuilder, logger),
+		"handler": handler.NewHandler(bbs, startMessageBuilder, stopMessageBuilder, logger),
 	})
 
 	logger.Info("started")
