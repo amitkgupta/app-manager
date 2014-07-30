@@ -10,22 +10,6 @@
 			"Rev": "b8a35001b773c267eb260a691f4e5499a3531600"
 		},
 		{
-			"ImportPath": "github.com/cloudfoundry-incubator/auction/auctionrep",
-			"Rev": "befbe26e31700be0ca89b12380d5c8234a6afe93"
-		},
-		{
-			"ImportPath": "github.com/cloudfoundry-incubator/auction/auctiontypes",
-			"Rev": "befbe26e31700be0ca89b12380d5c8234a6afe93"
-		},
-		{
-			"ImportPath": "github.com/cloudfoundry-incubator/auction/communication/nats",
-			"Rev": "befbe26e31700be0ca89b12380d5c8234a6afe93"
-		},
-		{
-			"ImportPath": "github.com/cloudfoundry-incubator/auction/util",
-			"Rev": "befbe26e31700be0ca89b12380d5c8234a6afe93"
-		},
-		{
 			"ImportPath": "github.com/cloudfoundry-incubator/cf-lager",
 			"Rev": "c88fc2b60504c2feb0a40435d505cf21d9cd58d3"
 		},
@@ -34,16 +18,8 @@
 			"Rev": "8300c5546d32d8533295f666c1cd0941113fd7bb"
 		},
 		{
-			"ImportPath": "github.com/cloudfoundry-incubator/executor/api",
-			"Rev": "bd5a72a160d8f871cb75a76e3eb6a2ab9b79ab9b"
-		},
-		{
-			"ImportPath": "github.com/cloudfoundry-incubator/executor/client",
-			"Rev": "bd5a72a160d8f871cb75a76e3eb6a2ab9b79ab9b"
-		},
-		{
 			"ImportPath": "github.com/cloudfoundry-incubator/rep/routes",
-			"Rev": "36c5de1a11f35971bb4c74942a6d60ab26c8b5a7"
+			"Rev": "2c89c1acc71d4b873ae9556a3648dfce176c0462"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/bbs",
