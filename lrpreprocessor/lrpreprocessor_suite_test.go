@@ -1,4 +1,4 @@
-package router_test
+package lrpreprocessor_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestRouter(t *testing.T) {
+func TestLrpreprocessor(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Router Suite")
+	RunSpecs(t, "LRPreProcessor Suite")
 }

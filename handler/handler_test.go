@@ -5,11 +5,10 @@ import (
 	"syscall"
 
 	. "github.com/cloudfoundry-incubator/app-manager/handler"
-	"github.com/cloudfoundry-incubator/app-manager/start_message_builder"
+	"github.com/cloudfoundry-incubator/app-manager/handler/fakes"
 	"github.com/cloudfoundry-incubator/app-manager/stop_message_builder"
 	"github.com/cloudfoundry-incubator/runtime-schema/bbs/fake_bbs"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
-	"github.com/cloudfoundry/storeadapter"
 	"github.com/pivotal-golang/lager/lagertest"
 	"github.com/tedsuo/ifrit"
 
@@ -20,9 +19,9 @@ import (
 
 var _ = Describe("Handler", func() {
 	var (
-		startMessageBuilder       *start_message_builder.StartMessageBuilder
 		stopMessageBuilder        *stop_message_builder.StopMessageBuilder
 		bbs                       *fake_bbs.FakeAppManagerBBS
+		lrpp                      *fakes.FakeLRPreProcessor
 		logger                    *lagertest.TestLogger
 		desiredLRP                models.DesiredLRP
 		numAZs                    int
@@ -45,27 +44,27 @@ var _ = Describe("Handler", func() {
 
 		logger = lagertest.NewTestLogger("test")
 
-		startMessageBuilder = start_message_builder.New(numAZs, repAddrRelativeToExecutor, healthChecks, logger)
 		stopMessageBuilder = stop_message_builder.New(numAZs)
 
-		handlerRunner := NewHandler(bbs, startMessageBuilder, stopMessageBuilder, logger)
+		lrpp = new(fakes.FakeLRPreProcessor)
+
+		handlerRunner := NewHandler(bbs, lrpp, numAZs, stopMessageBuilder, logger)
 
 		desiredLRP = models.DesiredLRP{
-			ProcessGuid:  "the-app-guid-the-app-version",
-			Source:       "http://the-droplet.uri.com",
-			Stack:        "some-stack",
-			StartCommand: "the-start-command",
-			Environment: []models.EnvironmentVariable{
-				{Name: "foo", Value: "bar"},
-				{Name: "VCAP_APPLICATION", Value: "{\"application_name\":\"my-app\"}"},
+			ProcessGuid: "the-app-guid-the-app-version",
+
+			Instances: 2,
+			Stack:     "some-stack",
+
+			Actions: []models.ExecutorAction{
+				{
+					Action: models.RunAction{
+						Path: "some-run-action-path",
+					},
+				},
 			},
-			MemoryMB:        128,
-			DiskMB:          512,
-			FileDescriptors: 32,
-			Instances:       2,
-			Routes:          []string{"route1", "route2"},
-			LogGuid:         "the-log-id",
 		}
+
 		handler = ifrit.Envoke(handlerRunner)
 	})
 
@@ -163,18 +162,27 @@ var _ = Describe("Handler", func() {
 				bbs.WhenGettingAvailableFileServer = func() (string, error) {
 					return "http://file-server.com/", nil
 				}
+
+				lrpp.PreProcessStub = func(lrp models.DesiredLRP, index int, guid string) (models.DesiredLRP, error) {
+					lrp.ProcessGuid = "preprocessed-" + lrp.ProcessGuid
+					return lrp, nil
+				}
 			})
 
-			It("puts a LRPStartAuction in the bbs", func() {
+			It("puts a LRPStartAuction in the bbs with a preprocessed LRP", func() {
 				Eventually(bbs.GetLRPStartAuctions).Should(HaveLen(2))
 
 				startAuctions := bbs.GetLRPStartAuctions()
 
 				firstStartAuction := startAuctions[0]
-				Ω(firstStartAuction.ProcessGuid).Should(Equal("the-app-guid-the-app-version"))
+				Ω(firstStartAuction.DesiredLRP.ProcessGuid).Should(Equal("preprocessed-the-app-guid-the-app-version"))
+				Ω(firstStartAuction.InstanceGuid).ShouldNot(BeEmpty())
 
 				secondStartAuction := startAuctions[1]
-				Ω(secondStartAuction.ProcessGuid).Should(Equal("the-app-guid-the-app-version"))
+				Ω(secondStartAuction.DesiredLRP.ProcessGuid).Should(Equal("preprocessed-the-app-guid-the-app-version"))
+				Ω(secondStartAuction.InstanceGuid).ShouldNot(BeEmpty())
+
+				Ω(firstStartAuction.InstanceGuid).ShouldNot(Equal(secondStartAuction.InstanceGuid))
 			})
 
 			It("assigns increasing indices for the auction requests", func() {
@@ -185,27 +193,13 @@ var _ = Describe("Handler", func() {
 				secondStartAuction := startAuctions[1]
 
 				Ω(firstStartAuction.Index).Should(Equal(0))
-				Ω(*firstStartAuction.Log.Index).Should(Equal(0))
 				Ω(secondStartAuction.Index).Should(Equal(1))
-				Ω(*secondStartAuction.Log.Index).Should(Equal(1))
 			})
 		})
 
-		Context("when file server is not available", func() {
+		Context("when preprocessing fails", func() {
 			BeforeEach(func() {
-				bbs.WhenGettingAvailableFileServer = func() (string, error) {
-					return "", storeadapter.ErrorKeyNotFound
-				}
-			})
-
-			It("does not put a LRPStartAuction in the bbs", func() {
-				Consistently(bbs.GetLRPStartAuctions).Should(BeEmpty())
-			})
-		})
-
-		Context("when unable to build a start message", func() {
-			BeforeEach(func() {
-				desiredLRP.Stack = "some-unknown-stack"
+				lrpp.PreProcessReturns(models.DesiredLRP{}, errors.New("oh no!"))
 			})
 
 			It("does not put a LRPStartAuction in the bbs", func() {

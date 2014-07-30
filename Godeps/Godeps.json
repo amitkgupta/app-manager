@@ -6,32 +6,20 @@
 	],
 	"Deps": [
 		{
-			"ImportPath": "github.com/bmizerany/pat",
-			"Rev": "b8a35001b773c267eb260a691f4e5499a3531600"
-		},
-		{
 			"ImportPath": "github.com/cloudfoundry-incubator/cf-lager",
-			"Rev": "c88fc2b60504c2feb0a40435d505cf21d9cd58d3"
+			"Rev": "e28b8c12c6771eefcfef8654002dc513f42eb673"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/delta_force/delta_force",
 			"Rev": "8300c5546d32d8533295f666c1cd0941113fd7bb"
 		},
 		{
-			"ImportPath": "github.com/cloudfoundry-incubator/rep/routes",
-			"Rev": "2c89c1acc71d4b873ae9556a3648dfce176c0462"
-		},
-		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/bbs",
-			"Rev": "6355555ae352e54f880a7677da2c9400a357ff49"
+			"Rev": "9c2381f56bbb269678b149bc268e21cf7d06f615"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/models",
-			"Rev": "6355555ae352e54f880a7677da2c9400a357ff49"
-		},
-		{
-			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/router",
-			"Rev": "6355555ae352e54f880a7677da2c9400a357ff49"
+			"Rev": "9c2381f56bbb269678b149bc268e21cf7d06f615"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/gunk/natsrunner",
@@ -39,10 +27,6 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/gunk/timeprovider",
-			"Rev": "64cdd7421c0413dc87e5fca2b254efbb4e7dd9d0"
-		},
-		{
-			"ImportPath": "github.com/cloudfoundry/gunk/urljoiner",
 			"Rev": "64cdd7421c0413dc87e5fca2b254efbb4e7dd9d0"
 		},
 		{
@@ -78,10 +62,6 @@
 		{
 			"ImportPath": "github.com/tedsuo/ifrit",
 			"Rev": "435f9e78ed02262ec0d1e13a82b5a475c990714a"
-		},
-		{
-			"ImportPath": "github.com/tedsuo/rata",
-			"Rev": "ffbc6810b2dff37aade33e5bf1ee8deadafe867d"
 		}
 	]
 }

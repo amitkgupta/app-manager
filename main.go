@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"os"
 	"strings"
@@ -17,26 +16,14 @@ import (
 	"github.com/tedsuo/ifrit/sigmon"
 
 	"github.com/cloudfoundry-incubator/app-manager/handler"
-	"github.com/cloudfoundry-incubator/app-manager/start_message_builder"
+	"github.com/cloudfoundry-incubator/app-manager/lrpreprocessor"
 	"github.com/cloudfoundry-incubator/app-manager/stop_message_builder"
-)
-
-var repAddrRelativeToExecutor = flag.String(
-	"repAddrRelativeToExecutor",
-	"127.0.0.1:20515",
-	"address of the rep server that should receive health status updates",
 )
 
 var etcdCluster = flag.String(
 	"etcdCluster",
 	"http://127.0.0.1:4001",
 	"comma-separated list of etcd addresses (http://ip:port)",
-)
-
-var circuses = flag.String(
-	"circuses",
-	"",
-	"app lifecycle binary bundle mapping (stack => bundle filename in fileserver)",
 )
 
 var numAZs = flag.Int(
@@ -56,26 +43,21 @@ func main() {
 
 	bbs := initializeBbs(logger)
 
-	var circuseDownloadURLs map[string]string
-	err := json.Unmarshal([]byte(*circuses), &circuseDownloadURLs)
-	if err != nil {
-		logger.Fatal("invalid-health-checks", err)
-	}
+	lrpp := lrpreprocessor.New(bbs)
 
-	startMessageBuilder := start_message_builder.New(*numAZs, *repAddrRelativeToExecutor, circuseDownloadURLs, logger)
 	stopMessageBuilder := stop_message_builder.New(*numAZs)
 
 	group := grouper.EnvokeGroup(grouper.RunGroup{
-		"handler": handler.NewHandler(bbs, startMessageBuilder, stopMessageBuilder, logger),
+		"handler": handler.NewHandler(bbs, lrpp, *numAZs, stopMessageBuilder, logger),
 	})
 
 	logger.Info("started")
 
 	monitor := ifrit.Envoke(sigmon.New(group))
 
-	err = <-monitor.Wait()
+	err := <-monitor.Wait()
 	if err != nil {
-		logger.Error("exited", err)
+		logger.Error("exited-with-failure", err)
 		os.Exit(1)
 	}
 
